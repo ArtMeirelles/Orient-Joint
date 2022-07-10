@@ -1,3 +1,8 @@
+''' Made by Arthur Cury Meirelles
+The goal is to make an Auto rigging for vehicle
+Made for my studies at BCIT for the Technical Atist course
+my e-mail is: arthurcurymeirelles@hotmail.com'''
+
 import maya.cmds as cmds
 
 class ButtonWin(object):
