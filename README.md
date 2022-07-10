@@ -1,4 +1,4 @@
-# Orient-Joint
+# Joint Orientation
 I create this simple tool that can orient joints with more options and a faster way, so you can have a very specific adjust. 
 
 You can see a little demonstration on who the tool works.
