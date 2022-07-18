@@ -1,7 +1,6 @@
 '''
 Made by Arthur Cury Meirelles
-The goal is to make an Auto rigging for vehicle
-Made for my studies at BCIT during Technical Artist course.
+The goal was to make a better and easy way to orient joints.
 Contact:
     arthurcurymeirelles@hotmail.com
     https://www.linkedin.com/in/arthurm3d
