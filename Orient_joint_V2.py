@@ -41,7 +41,7 @@ class ButtonWin(object):
         self.sacle_j = cmds.floatFieldGrp( numberOfFields=1, label = "scale", v1=0.5 )
         cmds.button( label = "Scale_Joints", parent=self.layout, command=self.scale_joints )
         cmds.separator()
-        cmds.iconTextButton("lblCopyright1", l="All Rights Reserved.", w=310, h=20, style="textOnly", c="cmds.showHelp(\"http://www.arthurcurymeirelle.wixsite.com/art3d\", a=1)")
+        cmds.iconTextButton("lblCopyright1", l="All Rights Reserved.", w=310, h=20, style="textOnly", c="cmds.showHelp(\"http://www.arthurmeirelles.com\", a=1)")
         cmds.showWindow()
         
  
