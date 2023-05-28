@@ -8,7 +8,7 @@ Contact:
 
 import maya.cmds as cmds
 
-class ButtonWin(object):
+class Orient_jnt_Window():
     def __init__(self):
         pass
         
@@ -34,10 +34,9 @@ class ButtonWin(object):
         cmds.button("btnYUp", l="Y", w=50, h=20, c=worldUpY)
         cmds.button("btnZUp", l="Z", w=50, h=20, c=worldUpZ)
         cmds.setParent( '..' )			
-        cmds.checkBox("chbGuess", l="Guess Up Direction")
-        cmds.button("btnOrientJoints", l="Orient Joints", al="center", h=40, c=self.orientJointsUI, ann="Orient Joints")		
+        cmds.button("btnOrientJoints", l="Orient Joints", al="center", h=40, c=self.Orient_joint_query_func, ann="Orient Joints")		
         self.fieldGrp = cmds.floatFieldGrp( numberOfFields=3, label = "joints", v1=0,v2=0,v3=0,cw4=(80,40,40,40))
-        cmds.button( label = "Orient", parent=self.layout, command=self.queryPadding )
+        cmds.button( label = "Orient", parent=self.layout, command=self.rotation_axis_query )
         self.sacle_j = cmds.floatFieldGrp( numberOfFields=1, label = "scale", v1=0.5 )
         cmds.button( label = "Scale_Joints", parent=self.layout, command=self.scale_joints )
         cmds.separator()
@@ -45,34 +44,25 @@ class ButtonWin(object):
         cmds.showWindow()
         
  
-    def queryPadding(self, arg=None):
-     padding = cmds.floatFieldGrp(self.fieldGrp, query=True, value1=True)
-     padding2 = cmds.floatFieldGrp(self.fieldGrp, query=True,value2=True)
-     padding3 = cmds.floatFieldGrp(self.fieldGrp, query=True,value3=True)
+    def rotation_axis_query(self, *arg):
+     rotation_query_1 = cmds.floatFieldGrp(self.fieldGrp, query=True, value1=True)
+     rotation_query_2 = cmds.floatFieldGrp(self.fieldGrp, query=True,value2=True)
+     rotation_query_3 = cmds.floatFieldGrp(self.fieldGrp, query=True,value3=True)
      jointlist = cmds.ls(sl=True)
-     for eachJointSelected in jointlist:
-        rotation = cmds.xform(eachJointSelected, r=1, os=1, ra=[padding, padding2, padding3]) 
+     for joint_selected in jointlist:
+        #Change rotation axis orientation 
+        rotation = cmds.xform(joint_selected, r=1, os=1, ra=[rotation_query_1, rotation_query_2, rotation_query_3]) 
         print (rotation)
         jointToOrient = cmds.ls(sl=True)
         cmds.joint(jointToOrient, e=True, zeroScaleOrient=True) 
         cmds.makeIdentity(jointToOrient, apply=True, t=0, r=1, s=0, n=0)
         
-    def joints_xyz():
-         joint_xyz = cmds.ls(sl=True)
-         print (joint_xyz)
-         item= 'yzx'
-         cmds.joint( joint_xyz, e=True, zso=True, oj= item,sao='zup',ch=True )
-
-    def yzx_up(self, arg=None):
-        joint_xyz = cmds.ls(sl=True)
-        print (joint_xyz)
-        cmds.joint( joint_xyz, e=True, zso=True, oj= 'yzx',sao='zup',ch=True )
         
-    def scale_joints(self, arg=None):
+    def scale_joints(self, *arg):
         scale = cmds.floatFieldGrp(self.sacle_j, query=True, value1=True)
         cmds.jointDisplayScale( scale )
         
-    def orientJointsUI(self,* args):
+    def Orient_joint_query_func(self,*arg):
         aimSelected = cmds.radioButtonGrp("rbgAim", q=True, sl=True)
         upSelected = cmds.radioButtonGrp("rbgUp", q=True, sl=True)
 
@@ -86,7 +76,7 @@ class ButtonWin(object):
         worldUp[1] = cmds.floatFieldGrp("rbgWorldUp", q=True, v2=True)
         worldUp[2] = cmds.floatFieldGrp("rbgWorldUp", q=True, v3=True)
 
-        guessUp = cmds.checkBox("chbGuess", q=True, v=True)
+        UpDirc = 0
 
         aimAxis = [0,0,0]
         upAxis = [0,0,0]
@@ -121,13 +111,13 @@ class ButtonWin(object):
 
             
 
-                doOrientJoint(jointsToOrient, aimAxis, upAxis, worldUp, guessUp)
+                Orient_joints_func(jointsToOrient, aimAxis, upAxis, worldUp, UpDirc)
                 cmds.select(elemSelected, r=True)
 
         cmds.undoInfo(cck=True)
 
     
-def doOrientJoint(jointsToOrient, aimAxis, upAxis, worldUp, guessUp):
+def Orient_joints_func(jointsToOrient, aimAxis, upAxis, worldUp, UpDirc):
 	firstPass = 0
 	prevUpVector = [0,0,0]
 	for eachJoint in jointsToOrient:
@@ -136,60 +126,13 @@ def doOrientJoint(jointsToOrient, aimAxis, upAxis, worldUp, guessUp):
 			if len(childJoint) > 0:
 
 				childNewName = cmds.parent(childJoint, w=True)	#Store the name in case when unparented it changes it's name.
+                    
+				if UpDirc == 0: #Up direction
 
-				if guessUp == 0:
-					#Not guess Up direction
-					
+                
 					cmds.delete(cmds.aimConstraint(childNewName[0], eachJoint, w=1, o=(0,0,0), aim=aimAxis, upVector=upAxis, worldUpVector=worldUp, worldUpType="vector"))
 					freezeJointOrientation(eachJoint)
 					cmds.parent(childNewName, eachJoint)
-				else:
-					if guessUp == 1:
-						#Guess Up direction
-						
-
-						parentJoint = cmds.listRelatives(eachJoint, type="joint", p=True) 
-						if parentJoint != None :
-							if len(parentJoint) > 0:
-								posCurrentJoint = cmds.xform(eachJoint, q=True, ws=True, rp=True)
-								posParentJoint = cmds.xform(parentJoint, q=True, ws=True, rp=True)
-								tolerance = 0.0001
-
-								if (abs(posCurrentJoint[0] - posParentJoint[0]) <= tolerance and abs(posCurrentJoint[1] - posParentJoint[1]) <= tolerance and abs(posCurrentJoint[2] - posParentJoint[2]) <= tolerance):
-									aimChild = cmds.listRelatives(childNewName[0], type="joint", c=True) 
-									upDirRecalculated = crossProduct(eachJoint, childNewName[0], aimChild[0])
-									cmds.delete(cmds.aimConstraint(childNewName[0], eachJoint, w=1, o=(0,0,0), aim=aimAxis, upVector=upAxis, worldUpVector=upDirRecalculated, worldUpType="vector"))
-								else:
-									upDirRecalculated = crossProduct(parentJoint, eachJoint, childNewName[0])
-									cmds.delete(cmds.aimConstraint(childNewName[0], eachJoint, w=1, o=(0,0,0), aim=aimAxis, upVector=upAxis, worldUpVector=upDirRecalculated, worldUpType="vector"))
-							else:
-								aimChild = cmds.listRelatives(childNewName[0], type="joint", c=True) 
-								upDirRecalculated = crossProduct(eachJoint, childNewName[0], aimChild[0])
-						else:
-							aimChild = cmds.listRelatives(childNewName[0], type="joint", c=True) 
-							upDirRecalculated = crossProduct(eachJoint, childNewName[0], aimChild[0])
-							cmds.delete(cmds.aimConstraint(childNewName[0], eachJoint, w=1, o=(0,0,0), aim=aimAxis, upVector=upAxis, worldUpVector=upDirRecalculated, worldUpType="vector"))
-
-				
-
-
-
-					dotProduct = upDirRecalculated[0] * prevUpVector[0] + upDirRecalculated[1] * prevUpVector[1] + upDirRecalculated[2] * prevUpVector[2]
-
-					#For the next iteration
-					prevUpVector = upDirRecalculated
-
-					if firstPass > 0 and  dotProduct <= 0.0:
-						#dotProduct
-						cmds.xform(eachJoint, r=1, os=1, ra=(aimAxis[0] * 180.0, aimAxis[1] * 180.0, aimAxis[2] * 180.0))
-						prevUpVector[0] *= -1
-						prevUpVector[1] *= -1
-						prevUpVector[2] *= -1
-		
-					freezeJointOrientation(eachJoint)
-					cmds.parent(childNewName, eachJoint)
-
-
 
 
 			else:
@@ -213,12 +156,6 @@ def doOrientJoint(jointsToOrient, aimAxis, upAxis, worldUp, guessUp):
 		firstPass += 1
         
         
-   
-    
-
-def joint_qualquer(self,* args):
-    print (actObject)
-    cmds.delete(actObject)
 
 
 def worldUpX(self,* args):
@@ -239,20 +176,12 @@ def worldUpZ(self,* args):
 	cmds.floatFieldGrp("rbgWorldUp", e=True, v2=0.0)
 	cmds.floatFieldGrp("rbgWorldUp", e=True, v3=1.0)
     
-
-
-
-
-
-    
-    
     
 def freezeJointOrientation(jointToOrient):
 	cmds.joint(jointToOrient, e=True, zeroScaleOrient=True)
 	cmds.makeIdentity(jointToOrient, apply=True, t=0, r=1, s=0, n=0)
     
     
-b_cls = ButtonWin()  
+b_cls = Orient_jnt_Window()  
 b_cls.show()
-
 
